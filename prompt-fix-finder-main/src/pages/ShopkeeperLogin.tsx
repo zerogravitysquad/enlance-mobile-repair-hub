@@ -76,8 +76,7 @@ const ShopkeeperLogin = () => {
   };
 
   const registrationFormUrl =
-    "https://docs.google.com/forms/d/1Ii0pJthkTPfAyxfS_sN1Sbc9WX51X1X0yuOk49l0o1s/preview";
-
+    "https://docs.google.com/forms/d/e/1FAIpQLSfa2liSKIKvLqvM8_AHS7ycQYRYelEZxRrNglu0vMxLo5Cj8Q/viewform";
 
   return (
     <div className="min-h-screen bg-background flex">
