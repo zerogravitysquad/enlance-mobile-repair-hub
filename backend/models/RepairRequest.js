@@ -35,6 +35,11 @@ const repairRequestSchema = new mongoose.Schema({
         required: [true, 'Please specify your city'],
         trim: true
     },
+    area: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     status: {
         type: String,
         enum: ['pending', 'quoted', 'accepted', 'rejected', 'completed'],

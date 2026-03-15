@@ -55,7 +55,7 @@ const upload = multer({
  * @access  Private (User only)
  */
 const createRepairRequest = asyncHandler(async (req, res) => {
-    const { description, brand, model, city } = req.body;
+    const { description, brand, model, city, area } = req.body;
 
     // Check if image was uploaded
     if (!req.file) {
@@ -70,7 +70,8 @@ const createRepairRequest = asyncHandler(async (req, res) => {
         description,
         brand,
         model,
-        city
+        city,
+        area
     });
 
     res.status(201).json({

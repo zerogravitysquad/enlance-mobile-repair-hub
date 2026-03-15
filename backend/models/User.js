@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
             return this.role === 'shopkeeper'; // Required only for shopkeepers
         }
     },
+    area: {
+        type: String,
+        default: ''
+    },
     rating: {
         type: Number,
         default: 0,
