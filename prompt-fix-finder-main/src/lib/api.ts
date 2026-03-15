@@ -2,10 +2,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://enlance-backend.onrender.com/api';
 
 // Helper function to make API requests
-const apiRequest = async (endpoint: string, method: string, body?: object, token?: string) => {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
+const apiRequest = async (endpoint: string, method: string, body?: any, token?: string) => {
+    const headers: Record<string, string> = {};
+
+    // Only set Content-Type to application/json if we are NOT sending FormData
+    const isFormData = body instanceof FormData;
+    if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+    }
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -14,7 +18,7 @@ const apiRequest = async (endpoint: string, method: string, body?: object, token
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method,
         headers,
-        body: body ? JSON.stringify(body) : undefined,
+        body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
     });
 
     const data = await response.json();

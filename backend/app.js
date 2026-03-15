@@ -55,10 +55,10 @@ if (process.env.NODE_ENV === 'development') {
 // ========================================
 
 // Parse JSON bodies
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // Parse URL-encoded bodies
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ========================================
 // STATIC FILES

@@ -188,14 +188,23 @@ const UserDashboard = () => {
         return;
       }
 
-      await requestAPI.create({
-        brand: formData.brand,
-        model: formData.model,
-        issue: formData.issue,
-        city: formData.city,
-        area: formData.area,
-        image: selectedImage, // The backend handles base64 or you can modify to use FormData
-      }, token);
+      // Use FormData to send file correctly to Multer backend
+      const requestData = new FormData();
+      requestData.append('brand', formData.brand);
+      requestData.append('model', formData.model);
+      requestData.append('issue', formData.issue);
+      requestData.append('city', formData.city);
+      requestData.append('area', formData.area);
+
+      // Convert base64 image back to a file for upload
+      if (selectedImage) {
+        // Simple base64 to Blob conversion
+        const fetchResponse = await fetch(selectedImage);
+        const blob = await fetchResponse.blob();
+        requestData.append('image', blob, 'issue-image.jpg');
+      }
+
+      await requestAPI.create(requestData, token);
 
       toast({
         title: "Request Submitted! 🚀",
