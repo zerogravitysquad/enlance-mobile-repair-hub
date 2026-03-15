@@ -70,7 +70,7 @@ import {
   rejectRequest,
   RepairRequest,
 } from "@/lib/chatService";
-import { requestAPI } from "@/lib/api";
+import { requestAPI, chatAPI } from "@/lib/api";
 
 const mobileBrands = [
   "Apple",
