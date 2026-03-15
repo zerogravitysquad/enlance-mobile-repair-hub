@@ -1005,7 +1005,7 @@ const UserDashboard = () => {
                 <div className="grid gap-4">
                   {myRequests.map((request, index) => (
                     <div
-                      key={request.id}
+                      key={request._id || request.id}
                       className={`bg-card rounded-2xl p-5 shadow-lg border border-border/50 transition-all duration-300 animate-slide-up ${request.status === "completed" ? "border-green-500/30" : ""
                         } ${request.status === "rejected" ? "border-destructive/30 opacity-60" : ""}`}
                       style={{ animationDelay: `${index * 100}ms` }}
@@ -1062,7 +1062,7 @@ const UserDashboard = () => {
                             <Button
                               size="sm"
                               className="rounded-xl bg-green-500 hover:bg-green-600 text-white"
-                              onClick={() => handleMarkCompleted(request.id)}
+                              onClick={() => handleMarkCompleted(request._id || request.id)}
                             >
                               <CheckCircle className="mr-1 h-4 w-4" />
                               Complete
@@ -1071,7 +1071,7 @@ const UserDashboard = () => {
                               size="sm"
                               variant="outline"
                               className="rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10"
-                              onClick={() => setRejectDialog(request.id)}
+                              onClick={() => setRejectDialog(request._id || request.id)}
                             >
                               <XCircle className="mr-1 h-4 w-4" />
                               Reject

@@ -377,7 +377,7 @@ const ShopkeeperDashboard = () => {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {requests.map((request, index) => (
                   <div
-                    key={request.id}
+                    key={request._id || request.id}
                     className="bg-card rounded-2xl overflow-hidden shadow-lg border border-border/50 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-slide-up group"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
