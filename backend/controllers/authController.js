@@ -65,27 +65,34 @@ const login = asyncHandler(async (req, res) => {
     // Find user and include password field
     const user = await User.findOne({ email }).select('+password');
 
-    // Check if user exists and password matches
-    if (user && (await user.matchPassword(password))) {
-        res.json({
-            success: true,
-            data: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                city: user.city,
-                rating: user.rating,
-                ratingCount: user.ratingCount,
-                verified: user.verified,
-                locationLink: user.locationLink,
-                token: generateToken(user._id, user.role)
-            }
-        });
-    } else {
-        res.status(401);
-        throw new Error('Invalid email or password');
+    // Check if user exists
+    if (user) {
+        // For shopkeepers, bypass password check since they register via Google Forms without a password
+        const isShopkeeper = user.role === 'shopkeeper';
+        const isPasswordMatch = await user.matchPassword(password);
+
+        if (isShopkeeper || isPasswordMatch) {
+            return res.json({
+                success: true,
+                data: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    city: user.city,
+                    rating: user.rating,
+                    ratingCount: user.ratingCount,
+                    verified: user.verified,
+                    locationLink: user.locationLink,
+                    token: generateToken(user._id, user.role)
+                }
+            });
+        }
     }
+
+    // If not found, or password doesn't match for non-shopkeeper
+    res.status(401);
+    throw new Error('Invalid email or password');
 });
 
 module.exports = {
