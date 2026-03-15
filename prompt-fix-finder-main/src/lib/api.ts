@@ -39,6 +39,27 @@ export const authAPI = {
 export const shopAPI = {
     getAll: (token: string) => apiRequest('/shops', 'GET', undefined, token),
     getById: (id: string, token: string) => apiRequest(`/shops/${id}`, 'GET', undefined, token),
+    getRequests: (city: string, token: string) => apiRequest(`/request/city/${city}`, 'GET', undefined, token),
+    sendQuotation: (quotationData: any, token: string) =>
+        apiRequest('/quotation', 'POST', quotationData, token),
+};
+
+// Request APIs
+export const requestAPI = {
+    create: (requestData: any, token: string) => {
+        // Handle multipart/form-data for images if needed, 
+        // but for now we'll assume JSON or base64 if that's what the frontend sends
+        return apiRequest('/request', 'POST', requestData, token);
+    },
+    getUserRequests: (userId: string, token: string) =>
+        apiRequest(`/request/user/${userId}`, 'GET', undefined, token),
+};
+
+// Chat APIs
+export const chatAPI = {
+    getRooms: (token: string) => apiRequest('/chat/rooms', 'GET', undefined, token),
+    sendMessage: (roomId: string, message: any, token: string) =>
+        apiRequest(`/chat/message/${roomId}`, 'POST', message, token),
 };
 
 // Helper: Save & Get token from localStorage

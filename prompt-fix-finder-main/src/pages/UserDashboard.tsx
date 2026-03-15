@@ -70,6 +70,7 @@ import {
   rejectRequest,
   RepairRequest,
 } from "@/lib/chatService";
+import { requestAPI } from "@/lib/api";
 
 const mobileBrands = [
   "Apple",
@@ -127,17 +128,30 @@ const UserDashboard = () => {
 
   // Load data and subscribe to updates
   useEffect(() => {
-    const loadData = () => {
-      const rooms = getUserChatRooms(currentUser.userId);
-      // Sort by shop rating (highest first)
-      rooms.sort((a, b) => (b.shopRating || 0) - (a.shopRating || 0));
-      setChatRooms(rooms);
-      setShops(getRegisteredShops());
-      setMyRequests(getRepairRequests().filter((r) => r.userId === currentUser.userId));
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('enlance_token');
+        if (!token) return;
+
+        // Fetch real requests
+        if (currentUser?.userId) {
+          const fetchedRequests = await requestAPI.getUserRequests(currentUser.userId, token);
+          setMyRequests(fetchedRequests);
+        }
+
+        // Fetch registered shops (this can still use mock or we can add an API for it)
+        setShops(getRegisteredShops());
+
+        // Fetch active chats
+        const fetchedRooms = await chatAPI.getRooms(token);
+        setChatRooms(fetchedRooms);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      }
     };
 
-    loadData();
-    const unsubscribe = subscribeToUpdates(loadData);
+    fetchData();
+    const unsubscribe = subscribeToUpdates(fetchData);
     return unsubscribe;
   }, [currentUser.userId]);
 
@@ -152,7 +166,7 @@ const UserDashboard = () => {
     }
   };
 
-  const handleSubmitRequest = () => {
+  const handleSubmitRequest = async () => {
     if (!formData.brand || !formData.model || !formData.issue || !formData.city || !formData.area) {
       toast({
         title: "Missing Information",
@@ -162,26 +176,56 @@ const UserDashboard = () => {
       return;
     }
 
-    addRepairRequest({
-      userId: currentUser.userId,
-      userName: currentUser.userName,
-      userAvatar: currentUser.userAvatar,
-      location: `${formData.area}, ${formData.city}`,
-      city: formData.city,
-      area: formData.area,
-      brand: formData.brand,
-      model: formData.model,
-      issue: formData.issue,
-      image: selectedImage,
-    });
+    try {
+      const token = localStorage.getItem('enlance_token');
+      if (!token) {
+        toast({
+          title: "Session Expired",
+          description: "Please login again.",
+          variant: "destructive",
+        });
+        navigate("/user/login");
+        return;
+      }
 
-    toast({
-      title: "Request Submitted! ✓",
-      description: `Your request has been sent to repair shops in ${formData.area}, ${formData.city}.`,
-    });
+      await requestAPI.create({
+        brand: formData.brand,
+        model: formData.model,
+        issue: formData.issue,
+        city: formData.city,
+        area: formData.area,
+        image: selectedImage, // The backend handles base64 or you can modify to use FormData
+      }, token);
 
-    setFormData({ brand: "", model: "", issue: "", city: "", area: "" });
-    setSelectedImage(null);
+      toast({
+        title: "Request Submitted! 🚀",
+        description: `Your request has been sent to repair shops in ${formData.area}, ${formData.city}.`,
+      });
+
+      setFormData({ brand: "", model: "", issue: "", city: "", area: "" });
+      setSelectedImage(null);
+
+      // Refresh requests list
+      loadUserRequests();
+    } catch (error: any) {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Could not send request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadUserRequests = async () => {
+    try {
+      const token = localStorage.getItem('enlance_token');
+      if (token && currentUser?.userId) {
+        const requests = await requestAPI.getUserRequests(currentUser.userId, token);
+        setMyRequests(requests);
+      }
+    } catch (error) {
+      console.error("Failed to load requests:", error);
+    }
   };
 
   const handleChatAction = (roomId: string, action: "accept" | "reject") => {
@@ -406,9 +450,8 @@ const UserDashboard = () => {
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold">Upload Issue Image</Label>
                     <div
-                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:scale-[1.01] ${
-                        selectedImage ? "border-primary bg-primary/5" : "border-border"
-                      }`}
+                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:scale-[1.01] ${selectedImage ? "border-primary bg-primary/5" : "border-border"
+                        }`}
                     >
                       <input
                         type="file"
@@ -546,9 +589,8 @@ const UserDashboard = () => {
                       {chatRooms.map((room, index) => (
                         <div
                           key={room.id}
-                          className={`bg-card rounded-2xl p-5 shadow-lg border border-border/50 transition-all duration-300 hover:shadow-xl hover:scale-[1.01] animate-slide-up ${
-                            room.status === "rejected" ? "opacity-50" : ""
-                          }`}
+                          className={`bg-card rounded-2xl p-5 shadow-lg border border-border/50 transition-all duration-300 hover:shadow-xl hover:scale-[1.01] animate-slide-up ${room.status === "rejected" ? "opacity-50" : ""
+                            }`}
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
                           <div className="flex items-start gap-4">
@@ -683,11 +725,10 @@ const UserDashboard = () => {
                         className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                            msg.sender === "user"
-                              ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
-                              : "bg-card border border-border shadow-md"
-                          }`}
+                          className={`max-w-[75%] rounded-2xl px-4 py-3 ${msg.sender === "user"
+                            ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+                            : "bg-card border border-border shadow-md"
+                            }`}
                         >
                           <p className="text-sm">{msg.text}</p>
                           <p className={`text-[10px] mt-1 ${msg.sender === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
@@ -899,9 +940,8 @@ const UserDashboard = () => {
                   {myRequests.map((request, index) => (
                     <div
                       key={request.id}
-                      className={`bg-card rounded-2xl p-5 shadow-lg border border-border/50 transition-all duration-300 animate-slide-up ${
-                        request.status === "completed" ? "border-green-500/30" : ""
-                      } ${request.status === "rejected" ? "border-destructive/30 opacity-60" : ""}`}
+                      className={`bg-card rounded-2xl p-5 shadow-lg border border-border/50 transition-all duration-300 animate-slide-up ${request.status === "completed" ? "border-green-500/30" : ""
+                        } ${request.status === "rejected" ? "border-destructive/30 opacity-60" : ""}`}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <div className="flex items-start gap-4">

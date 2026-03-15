@@ -14,6 +14,7 @@ import {
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { CITIES } from "@/lib/chatService";
+import { authAPI } from "@/lib/api";
 
 const UserRegister = () => {
   const navigate = useNavigate();
@@ -26,9 +27,10 @@ const UserRegister = () => {
     address: "",
     mobile: "",
     password: "",
+    role: "user",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate all fields
@@ -51,11 +53,28 @@ const UserRegister = () => {
       return;
     }
 
-    toast({
-      title: "Registration Successful",
-      description: "Welcome to ENLANCE! Please login to continue.",
-    });
-    navigate("/user/login");
+    try {
+      await authAPI.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role
+      });
+
+      toast({
+        title: "Registration Successful! 🎊",
+        description: `Welcome to ENLANCE, ${formData.name}! You can now login.`,
+      });
+
+      const loginPath = formData.role === "shopkeeper" ? "/shopkeeper/login" : "/user/login";
+      navigate(loginPath);
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: error.message || "Failed to create account. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -119,17 +138,14 @@ const UserRegister = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Select value={formData.city} onValueChange={(value) => setFormData({ ...formData, city: value })}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select city" />
+                <Label htmlFor="role">Register as</Label>
+                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                  <SelectTrigger className="h-10 border-primary/30">
+                    <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent className="bg-card">
-                    {CITIES.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="user">Individual User</SelectItem>
+                    <SelectItem value="shopkeeper">Shopkeeper</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -149,6 +165,46 @@ const UserRegister = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Select value={formData.city} onValueChange={(value) => setFormData({ ...formData, city: value })}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select city" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card">
+                    {CITIES.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
+                    className="pl-10 pr-10"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="address">Full Address (Optional)</Label>
               <div className="relative">
@@ -160,29 +216,6 @@ const UserRegister = () => {
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
-              </div>
-            </div>
-
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create a password"
-                  className="pl-10 pr-10"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
               </div>
             </div>
 

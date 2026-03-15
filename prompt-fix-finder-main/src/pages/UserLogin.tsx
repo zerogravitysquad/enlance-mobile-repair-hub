@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
+import { authAPI, saveToken } from "@/lib/api";
 
 const UserLogin = () => {
   const navigate = useNavigate();
@@ -16,38 +17,42 @@ const UserLogin = () => {
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Demo users data
-    const users: Record<string, { password: string; name: string; avatar: string; city: string }> = {
-      "santhosh@gmail.com": { password: "santhosh", name: "Santhosh", avatar: "S", city: "Coimbatore" },
-      "vidhyasagar@gmail.com": { password: "vidhyasagar", name: "Vidhyasagar", avatar: "V", city: "Coimbatore" },
-    };
-    
-    const user = users[formData.email];
-    
-    if (user && user.password === formData.password) {
-      // Set current user in localStorage
-      localStorage.setItem(
-        "enlance_current_user",
-        JSON.stringify({ userId: `user_${user.name.toLowerCase()}`, userName: user.name, userAvatar: user.avatar, city: user.city })
-      );
-      toast({
-        title: "Login Successful",
-        description: `Welcome back, ${user.name}!`,
-      });
-      navigate("/user/dashboard");
-    } else if (formData.email && formData.password) {
-      toast({
-        title: "Invalid Credentials",
-        description: "Try santhosh@gmail.com/santhosh or vidhyasagar@gmail.com/vidhyasagar",
-        variant: "destructive",
-      });
-    } else {
+
+    if (!formData.email || !formData.password) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const data = await authAPI.login(formData);
+
+      // Save token and set current user
+      saveToken(data.token);
+      localStorage.setItem(
+        "enlance_current_user",
+        JSON.stringify({
+          userId: data.user.id,
+          userName: data.user.name,
+          userAvatar: data.user.name.charAt(0).toUpperCase(),
+          city: data.user.city || "Coimbatore"
+        })
+      );
+
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${data.user.name}!`,
+      });
+      navigate("/user/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid email or password",
         variant: "destructive",
       });
     }

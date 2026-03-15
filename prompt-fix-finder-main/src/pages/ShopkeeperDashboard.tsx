@@ -50,6 +50,7 @@ import {
   RepairRequest,
   ChatRoom,
 } from "@/lib/chatService";
+import { shopAPI, chatAPI } from "@/lib/api";
 
 const ShopkeeperDashboard = () => {
   const navigate = useNavigate();
@@ -67,20 +68,43 @@ const ShopkeeperDashboard = () => {
 
   // Load data and subscribe to updates
   useEffect(() => {
-    const loadData = () => {
-      // Only get requests from the shop's SAME city AND area (CORE routing logic)
-      const city = currentShop.city || "Coimbatore";
-      const area = currentShop.area || "RS Puram";
-      setRequests(getRequestsByCityAndArea(city, area));
-      setChatRooms(getShopChatRooms(currentShop.shopId));
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('enlance_token');
+        if (!token) return;
+
+        const city = currentShop.city || "Coimbatore";
+        const area = currentShop.area || "RS Puram";
+
+        // Fetch real requests from backend
+        const fetchedRequests = await shopAPI.getRequests(city, token);
+        // Filter by area on frontend if the backend doesn't support area-level filtering yet
+        // (The backend route /api/request/city/:city currently only filters by city)
+        const areaRequests = fetchedRequests.filter((r: any) =>
+          !area || r.area?.toLowerCase() === area.toLowerCase()
+        );
+        setRequests(areaRequests);
+
+        // Fetch real chat rooms
+        const fetchedRooms = await chatAPI.getRooms(token);
+        setChatRooms(fetchedRooms);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      }
     };
 
-    loadData();
-    const unsubscribe = subscribeToUpdates(loadData);
-    return unsubscribe;
+    fetchData();
+    // Refresh every 30 seconds or on data update event
+    const interval = setInterval(fetchData, 30000);
+    const unsubscribe = subscribeToUpdates(fetchData);
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, [currentShop.shopId, currentShop.city, currentShop.area]);
 
-  const handleRequestChat = (request: RepairRequest) => {
+  const handleRequestChat = async (request: RepairRequest) => {
     if (!quotationInput.trim()) {
       toast({
         title: "Enter a quotation",
@@ -90,26 +114,33 @@ const ShopkeeperDashboard = () => {
       return;
     }
 
-    const message = `Hi ${request.userName}! I can help fix your ${request.brand} ${request.model}. My quotation: ₹${quotationInput}. Let's discuss further!`;
+    try {
+      const token = localStorage.getItem('enlance_token');
+      if (!token) return;
 
-    requestChat(
-      request.id,
-      currentShop.shopId,
-      currentShop.shopName,
-      currentShop.shopAvatar,
-      currentShop.shopRating,
-      message,
-      currentShop.shopLocation,
-      currentShop.shopLocationUrl
-    );
+      await shopAPI.sendQuotation({
+        requestId: request.id,
+        price: parseFloat(quotationInput),
+        message: `Hi ${request.userName}! I can help fix your ${request.brand} ${request.model}. My quotation: ₹${quotationInput}. Let's discuss further!`
+      }, token);
 
-    toast({
-      title: "Chat Request Sent! ✓",
-      description: "User will be notified. Wait for their response.",
-    });
+      toast({
+        title: "Chat Request Sent! ✓",
+        description: "User will be notified. Wait for their response.",
+      });
 
-    setQuotationInput("");
-    setViewDetailsOpen(false);
+      setQuotationInput("");
+      setViewDetailsOpen(false);
+
+      // Refresh data
+      // fetchData() is inside useEffect, we should probably extract it to share it
+    } catch (error: any) {
+      toast({
+        title: "Request Failed",
+        description: error.message || "Could not send quotation.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSendMessage = () => {
@@ -379,9 +410,8 @@ const ShopkeeperDashboard = () => {
                             setViewDetailsOpen(true);
                           }}
                           disabled={request.status === "chat_requested"}
-                          className={`rounded-xl h-11 shadow-lg ${
-                            request.status === "chat_requested" ? "opacity-50" : "shadow-primary/25 hover:shadow-xl"
-                          }`}
+                          className={`rounded-xl h-11 shadow-lg ${request.status === "chat_requested" ? "opacity-50" : "shadow-primary/25 hover:shadow-xl"
+                            }`}
                         >
                           <MessageSquare className="mr-2 h-4 w-4" />
                           {request.status === "chat_requested" ? "Requested" : "Send Quote"}
@@ -477,11 +507,10 @@ const ShopkeeperDashboard = () => {
                   {activeChatRoom?.messages.map((msg, i) => (
                     <div key={msg.id || i} className={`flex ${msg.sender === "shop" ? "justify-end" : "justify-start"}`}>
                       <div
-                        className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                          msg.sender === "shop"
-                            ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
-                            : "bg-card border border-border shadow-md"
-                        }`}
+                        className={`max-w-[75%] rounded-2xl px-4 py-3 ${msg.sender === "shop"
+                          ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+                          : "bg-card border border-border shadow-md"
+                          }`}
                       >
                         <p className="text-sm">{msg.text}</p>
                         <p className={`text-[10px] mt-1 ${msg.sender === "shop" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
