@@ -192,7 +192,7 @@ const UserDashboard = () => {
       const requestData = new FormData();
       requestData.append('brand', formData.brand);
       requestData.append('model', formData.model);
-      requestData.append('issue', formData.issue);
+      requestData.append('description', formData.issue); // Backend validation expects 'description', not 'issue'
       requestData.append('city', formData.city);
       requestData.append('area', formData.area);
 
