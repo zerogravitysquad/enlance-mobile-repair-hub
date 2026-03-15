@@ -282,12 +282,27 @@ const UserDashboard = () => {
     setActiveTab("chats");
   };
 
-  const handleMarkCompleted = (requestId: string) => {
-    markRequestCompleted(requestId);
-    toast({
-      title: "Marked as Completed! ✓",
-      description: "Your repair request has been marked as completed.",
-    });
+  const handleMarkCompleted = async (requestId: string) => {
+    try {
+      const token = localStorage.getItem('enlance_token');
+      if (!token) return;
+
+      await requestAPI.markCompleted(requestId, token);
+
+      toast({
+        title: "Marked as Completed! ✓",
+        description: "Your repair request has been marked as completed.",
+      });
+
+      // Refresh requests list
+      loadUserRequests();
+    } catch (error: any) {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Could not update status.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRejectRequest = () => {

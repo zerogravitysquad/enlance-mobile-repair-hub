@@ -118,7 +118,7 @@ const ShopkeeperDashboard = () => {
       if (!token) return;
 
       await shopAPI.sendQuotation({
-        requestId: request.id,
+        requestId: request._id || request.id,
         price: parseFloat(quotationInput),
         message: `Hi ${request.userName}! I can help fix your ${request.brand} ${request.model}. My quotation: ₹${quotationInput}. Let's discuss further!`
       }, token);
@@ -132,7 +132,7 @@ const ShopkeeperDashboard = () => {
       setViewDetailsOpen(false);
 
       // Refresh data
-      // fetchData() is inside useEffect, we should probably extract it to share it
+      window.location.reload(); // Simple way to refresh all data for now
     } catch (error: any) {
       toast({
         title: "Request Failed",

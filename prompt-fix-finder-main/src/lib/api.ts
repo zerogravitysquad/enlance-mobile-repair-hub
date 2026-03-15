@@ -57,6 +57,8 @@ export const requestAPI = {
     },
     getUserRequests: (userId: string, token: string) =>
         apiRequest(`/request/user/${userId}`, 'GET', undefined, token),
+    markCompleted: (requestId: string, token: string) =>
+        apiRequest(`/request/complete/${requestId}`, 'PUT', undefined, token),
 };
 
 // Chat APIs
