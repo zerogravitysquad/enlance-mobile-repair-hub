@@ -136,7 +136,7 @@ const UserDashboard = () => {
         // Fetch real requests
         if (currentUser?.userId) {
           const fetchedRequests = await requestAPI.getUserRequests(currentUser.userId, token);
-          setMyRequests(fetchedRequests);
+          setMyRequests(fetchedRequests.data);
         }
 
         // Fetch registered shops (this can still use mock or we can add an API for it)
@@ -144,7 +144,7 @@ const UserDashboard = () => {
 
         // Fetch active chats
         const fetchedRooms = await chatAPI.getRooms(token);
-        setChatRooms(fetchedRooms);
+        setChatRooms(fetchedRooms.data);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       }
@@ -221,7 +221,7 @@ const UserDashboard = () => {
       const token = localStorage.getItem('enlance_token');
       if (token && currentUser?.userId) {
         const requests = await requestAPI.getUserRequests(currentUser.userId, token);
-        setMyRequests(requests);
+        setMyRequests(requests.data);
       }
     } catch (error) {
       console.error("Failed to load requests:", error);

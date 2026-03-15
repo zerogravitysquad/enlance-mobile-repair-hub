@@ -33,20 +33,21 @@ const UserLogin = () => {
       const data = await authAPI.login(formData);
 
       // Save token and set current user
-      saveToken(data.token);
+      // Backend returns { success: true, data: { token, _id, name, ... } }
+      saveToken(data.data.token);
       localStorage.setItem(
         "enlance_current_user",
         JSON.stringify({
-          userId: data.user.id,
-          userName: data.user.name,
-          userAvatar: data.user.name.charAt(0).toUpperCase(),
-          city: data.user.city || "Coimbatore"
+          userId: data.data._id,
+          userName: data.data.name,
+          userAvatar: data.data.name.charAt(0).toUpperCase(),
+          city: data.data.city || "Coimbatore"
         })
       );
 
       toast({
         title: "Login Successful",
-        description: `Welcome back, ${data.user.name}!`,
+        description: `Welcome back, ${data.data.name}!`,
       });
       navigate("/user/dashboard");
     } catch (error: any) {

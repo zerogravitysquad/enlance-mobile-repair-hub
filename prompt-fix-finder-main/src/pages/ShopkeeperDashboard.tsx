@@ -79,15 +79,14 @@ const ShopkeeperDashboard = () => {
         // Fetch real requests from backend
         const fetchedRequests = await shopAPI.getRequests(city, token);
         // Filter by area on frontend if the backend doesn't support area-level filtering yet
-        // (The backend route /api/request/city/:city currently only filters by city)
-        const areaRequests = fetchedRequests.filter((r: any) =>
+        const areaRequests = (fetchedRequests.data || []).filter((r: any) =>
           !area || r.area?.toLowerCase() === area.toLowerCase()
         );
         setRequests(areaRequests);
 
         // Fetch real chat rooms
         const fetchedRooms = await chatAPI.getRooms(token);
-        setChatRooms(fetchedRooms);
+        setChatRooms(fetchedRooms.data || []);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       }
