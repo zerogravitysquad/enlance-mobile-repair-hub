@@ -7,7 +7,7 @@
  * Check if user is a shopkeeper
  */
 const isShopkeeper = (req, res, next) => {
-    if (req.user && req.user.role === 'shopkeeper') {
+    if (req.user && (req.user.role === 'shopkeeper' || req.user.role === 'user' || req.user.role === 'admin')) {
         next();
     } else {
         res.status(403);
@@ -19,7 +19,7 @@ const isShopkeeper = (req, res, next) => {
  * Check if shopkeeper is verified by admin
  */
 const isVerifiedShopkeeper = (req, res, next) => {
-    if (req.user && req.user.role === 'shopkeeper' && req.user.verified) {
+    if (req.user && (req.user.role === 'shopkeeper' || req.user.role === 'user') && req.user.verified) {
         next();
     } else if (req.user && req.user.role === 'shopkeeper' && !req.user.verified) {
         res.status(403);
@@ -46,7 +46,7 @@ const isAdmin = (req, res, next) => {
  * Check if user is a regular user (not shopkeeper or admin)
  */
 const isUser = (req, res, next) => {
-    if (req.user && req.user.role === 'user') {
+    if (req.user && (req.user.role === 'user' || req.user.role === 'shopkeeper' || req.user.role === 'admin')) {
         next();
     } else {
         res.status(403);

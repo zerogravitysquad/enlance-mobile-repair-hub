@@ -142,11 +142,53 @@ const ShopkeeperDashboard = () => {
     }
   };
 
-  const handleSendMessage = () => {
+  // Load messages when chat is active
+  useEffect(() => {
+    if (!activeChat) return;
+
+    const fetchMessages = async () => {
+      try {
+        const token = localStorage.getItem('enlance_token');
+        if (!token) return;
+
+        const room = chatRooms.find(r => r.id === activeChat);
+        if (!room) return;
+
+        const fetchedMessages = await chatAPI.getMessages(room.requestId, token);
+        setChatRooms(prev => prev.map(r =>
+          r.id === activeChat ? { ...r, messages: fetchedMessages.data } : r
+        ));
+      } catch (error) {
+        console.error("Failed to fetch messages:", error);
+      }
+    };
+
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
+    return () => clearInterval(interval);
+  }, [activeChat]);
+
+  const handleSendMessage = async () => {
     if (!chatMessage.trim() || !activeChat) return;
 
-    sendMessage(activeChat, chatMessage, "shop", currentShop.shopName);
-    setChatMessage("");
+    try {
+      const token = localStorage.getItem('enlance_token');
+      if (!token) return;
+
+      const room = chatRooms.find(r => r.id === activeChat);
+      if (!room) return;
+
+      await chatAPI.sendMessage({
+        requestId: room.requestId,
+        receiverId: room.userId,
+        message: chatMessage
+      }, token);
+
+      setChatMessage("");
+      // Messages will be updated by the polling useEffect
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
   };
 
   const getStatusBadge = (status: string) => {

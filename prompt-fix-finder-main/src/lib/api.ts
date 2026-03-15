@@ -64,8 +64,10 @@ export const requestAPI = {
 // Chat APIs
 export const chatAPI = {
     getRooms: (token: string) => apiRequest('/chat/rooms', 'GET', undefined, token),
-    sendMessage: (roomId: string, message: any, token: string) =>
-        apiRequest(`/chat/message/${roomId}`, 'POST', message, token),
+    getMessages: (requestId: string, token: string) =>
+        apiRequest(`/chat/messages/${requestId}`, 'GET', undefined, token),
+    sendMessage: (chatData: { requestId: string; receiverId: string; message: string }, token: string) =>
+        apiRequest('/chat', 'POST', chatData, token),
 };
 
 // Helper: Save & Get token from localStorage

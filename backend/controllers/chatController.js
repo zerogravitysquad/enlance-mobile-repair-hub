@@ -70,7 +70,116 @@ const sendMessage = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @route   GET /api/chat/rooms
+ * @desc    Get all chat rooms (as user or shopkeeper)
+ * @access  Private
+ */
+const getChatRooms = asyncHandler(async (req, res) => {
+    let rooms = [];
+
+    if (req.user.role === 'user') {
+        // Find all requests by user and their corresponding quotations/chats
+        const requests = await RepairRequest.find({ userId: req.user._id });
+        const requestIds = requests.map(r => r._id);
+
+        const quotations = await Quotation.find({ requestId: { $in: requestIds } })
+            .populate('shopId', 'name rating locationLink area city');
+
+        rooms = await Promise.all(quotations.map(async q => {
+            const messages = await Chat.find({ requestId: q.requestId }).sort({ createdAt: 1 });
+            const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+
+            return {
+                id: q._id,
+                requestId: q.requestId,
+                shopId: q.shopId._id,
+                shopName: q.shopId.name,
+                shopAvatar: q.shopId.name.charAt(0).toUpperCase(),
+                shopRating: q.shopId.rating || 0,
+                shopLocation: `${q.shopId.area}, ${q.shopId.city}`,
+                shopLocationUrl: q.shopId.locationLink,
+                userId: req.user._id,
+                userName: req.user.name,
+                userAvatar: req.user.name.charAt(0).toUpperCase(),
+                status: 'pending',
+                messages: messages.map(m => ({
+                    id: m._id,
+                    text: m.message,
+                    sender: m.senderId.toString() === req.user._id.toString() ? 'user' : 'shop',
+                    time: new Date(m.createdAt).toLocaleTimeString()
+                })),
+                lastMessage: lastMsg ? lastMsg.message : q.message,
+                lastMessageTime: lastMsg ? new Date(lastMsg.createdAt).toLocaleTimeString() : new Date(q.createdAt).toLocaleTimeString(),
+                quotation: q.price.toString()
+            };
+        }));
+    } else {
+        // Shopkeeper: find quotations sent by this shop
+        const quotations = await Quotation.find({ shopId: req.user._id });
+
+        rooms = await Promise.all(quotations.map(async q => {
+            const request = await RepairRequest.findById(q.requestId).populate('userId', 'name');
+            if (!request) return null;
+
+            const messages = await Chat.find({ requestId: q.requestId }).sort({ createdAt: 1 });
+            const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+
+            return {
+                id: q._id,
+                requestId: q.requestId,
+                shopId: req.user._id,
+                shopName: req.user.name,
+                shopAvatar: req.user.name.charAt(0).toUpperCase(),
+                shopRating: req.user.rating || 0,
+                userId: request.userId._id,
+                userName: request.userId.name,
+                userAvatar: request.userId.name.charAt(0).toUpperCase(),
+                status: 'accepted',
+                messages: messages.map(m => ({
+                    id: m._id,
+                    text: m.message,
+                    sender: m.senderId.toString() === req.user._id.toString() ? 'shop' : 'user',
+                    time: new Date(m.createdAt).toLocaleTimeString()
+                })),
+                lastMessage: lastMsg ? lastMsg.message : q.message,
+                lastMessageTime: lastMsg ? new Date(lastMsg.createdAt).toLocaleTimeString() : new Date(q.createdAt).toLocaleTimeString(),
+                quotation: q.price.toString()
+            };
+        }));
+        rooms = rooms.filter(r => r !== null);
+    }
+
+    res.json({
+        success: true,
+        data: rooms
+    });
+});
+
+/**
+ * @route   GET /api/chat/messages/:requestId
+ * @desc    Get all messages for a request
+ * @access  Private
+ */
+const getMessages = asyncHandler(async (req, res) => {
+    const { requestId } = req.params;
+    const messages = await Chat.find({ requestId }).sort({ createdAt: 1 });
+
+    res.json({
+        success: true,
+        data: messages.map(m => ({
+            id: m._id,
+            text: m.message,
+            sender: m.senderId.toString() === req.user._id.toString() ? (req.user.role === 'user' ? 'user' : 'shop') : (req.user.role === 'user' ? 'shop' : 'user'),
+            time: new Date(m.createdAt).toLocaleTimeString(),
+            timestamp: new Date(m.createdAt).getTime()
+        }))
+    });
+});
+
 module.exports = {
     getChatMessages,
-    sendMessage
+    sendMessage,
+    getChatRooms,
+    getMessages
 };
