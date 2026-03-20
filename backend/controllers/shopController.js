@@ -6,6 +6,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const RepairRequest = require('../models/RepairRequest');
 const Quotation = require('../models/Quotation');
+const Chat = require('../models/Chat');
 const User = require('../models/User');
 
 /**
@@ -70,6 +71,14 @@ const sendQuotation = asyncHandler(async (req, res) => {
         shopId: req.user._id,
         price,
         message
+    });
+
+    // Mirror quotation as a chat message for real-time history
+    await Chat.create({
+        requestId,
+        senderId: req.user._id,
+        receiverId: request.userId,
+        message: `[QUOTATION] ₹${price}: ${message}`
     });
 
     // Update request status to 'quoted' if still pending

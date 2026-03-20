@@ -136,7 +136,14 @@ const UserDashboard = () => {
         // Fetch real requests
         if (currentUser?.userId) {
           const fetchedRequests = await requestAPI.getUserRequests(currentUser.userId, token);
-          setMyRequests(fetchedRequests.data);
+          const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+          const mappedRequests = (fetchedRequests.data || []).map((req: any) => ({
+            ...req,
+            issue: req.description,
+            image: req.imagePath ? (req.imagePath.startsWith('http') ? req.imagePath : `${baseUrl}/${req.imagePath.replace(/\\/g, '/')}`) : null,
+            time: new Date(req.createdAt).toLocaleDateString() + ' ' + new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }));
+          setMyRequests(mappedRequests);
         }
 
         // Fetch registered shops (this can still use mock or we can add an API for it)
@@ -230,7 +237,14 @@ const UserDashboard = () => {
       const token = localStorage.getItem('enlance_token');
       if (token && currentUser?.userId) {
         const requests = await requestAPI.getUserRequests(currentUser.userId, token);
-        setMyRequests(requests.data);
+        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+        const mappedRequests = (requests.data || []).map((req: any) => ({
+          ...req,
+          issue: req.description,
+          image: req.imagePath ? (req.imagePath.startsWith('http') ? req.imagePath : `${baseUrl}/${req.imagePath.replace(/\\/g, '/')}`) : null,
+          time: new Date(req.createdAt).toLocaleDateString() + ' ' + new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+        setMyRequests(mappedRequests);
       }
     } catch (error) {
       console.error("Failed to load requests:", error);
@@ -1023,11 +1037,14 @@ const UserDashboard = () => {
                             <h3 className="font-bold text-foreground">
                               {request.brand} {request.model}
                             </h3>
-                            {request.status === "new" && (
+                            {(request.status === "new" || request.status === "pending") && (
                               <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-500">New</span>
                             )}
-                            {request.status === "chat_requested" && (
-                              <span className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-500">In Progress</span>
+                            {(request.status === "chat_requested" || request.status === "quoted") && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-500">Quoted</span>
+                            )}
+                            {request.status === "accepted" && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">Accepted</span>
                             )}
                             {request.status === "completed" && (
                               <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-500 flex items-center gap-1">

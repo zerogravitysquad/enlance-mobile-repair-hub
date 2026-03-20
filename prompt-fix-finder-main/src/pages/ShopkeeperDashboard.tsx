@@ -78,8 +78,15 @@ const ShopkeeperDashboard = () => {
 
         // Fetch real requests from backend
         const fetchedRequests = await shopAPI.getRequests(city, token);
+        const mappedRequests = (fetchedRequests.data || []).map((req: any) => ({
+          ...req,
+          issue: req.description,
+          image: req.imagePath ? (req.imagePath.startsWith('http') ? req.imagePath : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/${req.imagePath.replace(/\\/g, '/')}`) : null,
+          time: new Date(req.createdAt).toLocaleDateString() + ' ' + new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+
         // Filter by area on frontend if the backend doesn't support area-level filtering yet
-        const areaRequests = (fetchedRequests.data || []).filter((r: any) =>
+        const areaRequests = mappedRequests.filter((r: any) =>
           !area || r.area?.toLowerCase() === area.toLowerCase()
         );
         setRequests(areaRequests);
@@ -194,15 +201,29 @@ const ShopkeeperDashboard = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "new":
+      case "pending":
         return (
-          <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md shadow-green-500/25">
+          <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25">
             New Request
           </span>
         );
       case "chat_requested":
+      case "quoted":
         return (
           <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25">
-            Chat Requested
+            Quoted
+          </span>
+        );
+      case "accepted":
+        return (
+          <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md shadow-green-500/25">
+            Accepted
+          </span>
+        );
+      case "completed":
+        return (
+          <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-primary/80 to-primary text-white shadow-md shadow-primary/25">
+            Completed
           </span>
         );
       default:

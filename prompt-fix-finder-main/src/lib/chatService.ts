@@ -2,6 +2,7 @@
 
 export interface RepairRequest {
   id: string;
+  _id?: string;
   userId: string;
   userName: string;
   userAvatar: string;
@@ -204,7 +205,7 @@ const initializeDemoData = () => {
 const cleanupCompletedRequests = () => {
   const data = localStorage.getItem(STORAGE_KEYS.REQUESTS);
   if (!data) return;
-  
+
   const requests: RepairRequest[] = JSON.parse(data);
   const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
   const filtered = requests.filter(
@@ -247,12 +248,12 @@ export const getRequestsByCity = (city: string): RepairRequest[] => {
 // Get requests by city AND area (for shopkeepers - CORE routing logic)
 export const getRequestsByCityAndArea = (city: string, area: string): RepairRequest[] => {
   return getRepairRequests().filter(
-    (r) => 
-      r.city && 
-      r.area && 
-      r.city.toLowerCase() === city.toLowerCase() && 
-      r.area.toLowerCase() === area.toLowerCase() && 
-      r.status !== "completed" && 
+    (r) =>
+      r.city &&
+      r.area &&
+      r.city.toLowerCase() === city.toLowerCase() &&
+      r.area.toLowerCase() === area.toLowerCase() &&
+      r.status !== "completed" &&
       r.status !== "rejected"
   );
 };
@@ -425,11 +426,11 @@ export const sendMessage = (
   const updatedRooms = chatRooms.map((room) =>
     room.id === roomId
       ? {
-          ...room,
-          messages: [...room.messages, newMessage],
-          lastMessage: text,
-          lastMessageTime: timeString,
-        }
+        ...room,
+        messages: [...room.messages, newMessage],
+        lastMessage: text,
+        lastMessageTime: timeString,
+      }
       : room
   );
 
@@ -470,7 +471,7 @@ export const userInitiateChat = (
   initialMessage: string
 ): ChatRoom => {
   const chatRooms = getChatRooms();
-  
+
   // Check if chat already exists
   const existingRoom = chatRooms.find(
     (room) => room.userId === userId && room.shopId === shop.shopId && !room.requestId
@@ -559,13 +560,13 @@ export const getCurrentShop = () => {
   return data
     ? JSON.parse(data)
     : {
-        shopId: "shop_vaishnavi",
-        shopName: "Vaishnavi Mobile Repairs",
-        shopAvatar: "V",
-        shopRating: 4.9,
-        shopLocation: "RS Puram, Coimbatore",
-        shopLocationUrl: "https://maps.google.com/?q=RS+Puram+Coimbatore",
-        city: "Coimbatore",
-        area: "RS Puram",
-      };
+      shopId: "shop_vaishnavi",
+      shopName: "Vaishnavi Mobile Repairs",
+      shopAvatar: "V",
+      shopRating: 4.9,
+      shopLocation: "RS Puram, Coimbatore",
+      shopLocationUrl: "https://maps.google.com/?q=RS+Puram+Coimbatore",
+      city: "Coimbatore",
+      area: "RS Puram",
+    };
 };

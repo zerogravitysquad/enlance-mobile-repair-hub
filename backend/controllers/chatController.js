@@ -6,6 +6,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const Chat = require('../models/Chat');
 const RepairRequest = require('../models/RepairRequest');
+const Quotation = require('../models/Quotation');
 
 /**
  * @route   GET /api/chat/:requestId
@@ -79,7 +80,6 @@ const getChatRooms = asyncHandler(async (req, res) => {
     let rooms = [];
 
     if (req.user.role === 'user') {
-        // Find all requests by user and their corresponding quotations/chats
         const requests = await RepairRequest.find({ userId: req.user._id });
         const requestIds = requests.map(r => r._id);
 
@@ -90,21 +90,23 @@ const getChatRooms = asyncHandler(async (req, res) => {
             const messages = await Chat.find({ requestId: q.requestId }).sort({ createdAt: 1 });
             const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
 
+            if (!q.shopId) return null;
+
             return {
-                id: q._id,
-                requestId: q.requestId,
-                shopId: q.shopId._id,
+                id: q._id.toString(),
+                requestId: q.requestId.toString(),
+                shopId: q.shopId._id.toString(),
                 shopName: q.shopId.name,
                 shopAvatar: q.shopId.name.charAt(0).toUpperCase(),
                 shopRating: q.shopId.rating || 0,
                 shopLocation: `${q.shopId.area}, ${q.shopId.city}`,
                 shopLocationUrl: q.shopId.locationLink,
-                userId: req.user._id,
+                userId: req.user._id.toString(),
                 userName: req.user.name,
                 userAvatar: req.user.name.charAt(0).toUpperCase(),
                 status: 'pending',
                 messages: messages.map(m => ({
-                    id: m._id,
+                    id: m._id.toString(),
                     text: m.message,
                     sender: m.senderId.toString() === req.user._id.toString() ? 'user' : 'shop',
                     time: new Date(m.createdAt).toLocaleTimeString()
@@ -114,6 +116,7 @@ const getChatRooms = asyncHandler(async (req, res) => {
                 quotation: q.price.toString()
             };
         }));
+        rooms = rooms.filter(r => r !== null);
     } else {
         // Shopkeeper: find quotations sent by this shop
         const quotations = await Quotation.find({ shopId: req.user._id });
@@ -126,18 +129,18 @@ const getChatRooms = asyncHandler(async (req, res) => {
             const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
 
             return {
-                id: q._id,
-                requestId: q.requestId,
-                shopId: req.user._id,
+                id: q._id.toString(),
+                requestId: q.requestId.toString(),
+                shopId: req.user._id.toString(),
                 shopName: req.user.name,
                 shopAvatar: req.user.name.charAt(0).toUpperCase(),
                 shopRating: req.user.rating || 0,
-                userId: request.userId._id,
+                userId: request.userId._id.toString(),
                 userName: request.userId.name,
                 userAvatar: request.userId.name.charAt(0).toUpperCase(),
                 status: 'accepted',
                 messages: messages.map(m => ({
-                    id: m._id,
+                    id: m._id.toString(),
                     text: m.message,
                     sender: m.senderId.toString() === req.user._id.toString() ? 'shop' : 'user',
                     time: new Date(m.createdAt).toLocaleTimeString()
