@@ -273,10 +273,10 @@ const UserDashboard = () => {
     ));
 
     if (action === "accept") {
-      setActiveChat(roomId);
+      // Don't auto-open the chat – just show the "Open Chat" button in the list
       toast({
         title: "Chat Accepted! ✓",
-        description: "You can now chat with this shopkeeper",
+        description: "Click 'Open Chat' to start messaging the shopkeeper",
       });
     } else {
       toast({

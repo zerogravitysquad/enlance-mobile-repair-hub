@@ -104,7 +104,7 @@ const ShopkeeperDashboard = () => {
           const lastRead = lastReads[room.id] || 0;
           const msgs = (room as any).messages || [];
           counts[room.id] = msgs.filter(
-            (m: any) => m.sender === 'user' && new Date(m.time).getTime() > lastRead
+            (m: any) => m.sender === 'user' && new Date(m.createdAt).getTime() > lastRead
           ).length;
         }
         setUnreadCounts(counts);

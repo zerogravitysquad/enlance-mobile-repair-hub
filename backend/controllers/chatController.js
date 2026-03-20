@@ -109,7 +109,8 @@ const getChatRooms = asyncHandler(async (req, res) => {
                     id: m._id.toString(),
                     text: m.message,
                     sender: m.senderId.toString() === req.user._id.toString() ? 'user' : 'shop',
-                    time: new Date(m.createdAt).toLocaleTimeString()
+                    time: new Date(m.createdAt).toLocaleTimeString(),
+                    createdAt: m.createdAt
                 })),
                 lastMessage: lastMsg ? lastMsg.message : q.message,
                 lastMessageTime: lastMsg ? new Date(lastMsg.createdAt).toLocaleTimeString() : new Date(q.createdAt).toLocaleTimeString(),
@@ -143,7 +144,8 @@ const getChatRooms = asyncHandler(async (req, res) => {
                     id: m._id.toString(),
                     text: m.message,
                     sender: m.senderId.toString() === req.user._id.toString() ? 'shop' : 'user',
-                    time: new Date(m.createdAt).toLocaleTimeString()
+                    time: new Date(m.createdAt).toLocaleTimeString(),
+                    createdAt: m.createdAt
                 })),
                 lastMessage: lastMsg ? lastMsg.message : q.message,
                 lastMessageTime: lastMsg ? new Date(lastMsg.createdAt).toLocaleTimeString() : new Date(q.createdAt).toLocaleTimeString(),
