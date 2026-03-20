@@ -224,6 +224,5 @@ module.exports = {
     acceptQuotation,
     rejectQuotation,
     completeRepair,
-    rateShopkeeper,
-    upload // Export upload middleware
+    rateShopkeeper
 };
