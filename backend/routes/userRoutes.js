@@ -11,9 +11,9 @@ const {
     acceptQuotation,
     rejectQuotation,
     completeRepair,
-    rateShopkeeper,
-    upload
+    rateShopkeeper
 } = require('../controllers/userController');
+const { upload } = require('../config/cloudinary');
 const { protect } = require('../middleware/auth');
 const { isUser } = require('../middleware/roleAuth');
 const { validateRepairRequest, validateRating } = require('../middleware/validation');
