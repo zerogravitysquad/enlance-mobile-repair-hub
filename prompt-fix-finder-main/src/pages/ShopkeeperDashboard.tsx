@@ -82,7 +82,11 @@ const ShopkeeperDashboard = () => {
         const mappedRequests = (fetchedRequests.data || []).map((req: any) => ({
           ...req,
           issue: req.description,
-          image: req.imagePath ? (req.imagePath.startsWith('http') ? req.imagePath : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/${req.imagePath.replace(/\\/g, '/')}`) : null,
+          image: req.imagePath
+            ? (req.imagePath.startsWith('http')
+              ? req.imagePath
+              : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '')}/${req.imagePath.replace(/\\/g, '/')}`)
+            : null,
           time: new Date(req.createdAt).toLocaleDateString() + ' ' + new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }));
 
