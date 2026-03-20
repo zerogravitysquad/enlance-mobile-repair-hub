@@ -63,6 +63,7 @@ const ShopkeeperDashboard = () => {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [chatMessage, setChatMessage] = useState("");
   const [activeTab, setActiveTab] = useState("requests");
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   const currentShop = getCurrentShop();
 
@@ -93,7 +94,20 @@ const ShopkeeperDashboard = () => {
 
         // Fetch real chat rooms
         const fetchedRooms = await chatAPI.getRooms(token);
-        setChatRooms(fetchedRooms.data || []);
+        const rooms: ChatRoom[] = fetchedRooms.data || [];
+        setChatRooms(rooms);
+
+        // Compute unread counts: messages from user (sender!=='shop') after last-read timestamp
+        const lastReads: Record<string, number> = JSON.parse(localStorage.getItem('enlance_shop_last_reads') || '{}');
+        const counts: Record<string, number> = {};
+        for (const room of rooms) {
+          const lastRead = lastReads[room.id] || 0;
+          const msgs = (room as any).messages || [];
+          counts[room.id] = msgs.filter(
+            (m: any) => m.sender === 'user' && new Date(m.time).getTime() > lastRead
+          ).length;
+        }
+        setUnreadCounts(counts);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       }
@@ -174,6 +188,15 @@ const ShopkeeperDashboard = () => {
     const interval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
     return () => clearInterval(interval);
   }, [activeChat]);
+
+  // When shopkeeper opens a chat, mark it as read
+  const handleOpenChat = (roomId: string) => {
+    setActiveChat(roomId);
+    const lastReads = JSON.parse(localStorage.getItem('enlance_shop_last_reads') || '{}');
+    lastReads[roomId] = Date.now();
+    localStorage.setItem('enlance_shop_last_reads', JSON.stringify(lastReads));
+    setUnreadCounts(prev => ({ ...prev, [roomId]: 0 }));
+  };
 
   const handleSendMessage = async () => {
     if (!chatMessage.trim() || !activeChat) return;
@@ -513,16 +536,23 @@ const ShopkeeperDashboard = () => {
                     {acceptedChats.map((room, index) => (
                       <div
                         key={room.id}
-                        onClick={() => setActiveChat(room.id)}
+                        onClick={() => handleOpenChat(room.id)}
                         className="bg-card rounded-2xl p-5 shadow-lg border border-border/50 transition-all duration-300 hover:shadow-xl hover:scale-[1.01] animate-slide-up cursor-pointer"
                         style={{ animationDelay: `${index * 100}ms` }}
                       >
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-14 w-14 border-2 border-green-500/30 shadow-md">
-                            <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-500 text-white font-bold">
-                              {room.userAvatar}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="h-14 w-14 border-2 border-green-500/30 shadow-md">
+                              <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-500 text-white font-bold">
+                                {room.userAvatar}
+                              </AvatarFallback>
+                            </Avatar>
+                            {(unreadCounts[room.id] || 0) > 0 && (
+                              <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                                {unreadCounts[room.id]}
+                              </span>
+                            )}
+                          </div>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">

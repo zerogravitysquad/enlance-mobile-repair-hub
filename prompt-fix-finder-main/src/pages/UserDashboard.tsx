@@ -151,7 +151,13 @@ const UserDashboard = () => {
 
         // Fetch active chats
         const fetchedRooms = await chatAPI.getRooms(token);
-        setChatRooms(fetchedRooms.data);
+        // Apply persisted accept/reject decisions from localStorage
+        const persistedStatuses: Record<string, string> = JSON.parse(localStorage.getItem('enlance_chat_statuses') || '{}');
+        const rooms = (fetchedRooms.data || []).map((room: any) => ({
+          ...room,
+          status: persistedStatuses[room.id] || room.status
+        }));
+        setChatRooms(rooms);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       }
@@ -253,6 +259,18 @@ const UserDashboard = () => {
 
   const handleChatAction = (roomId: string, action: "accept" | "reject") => {
     respondToChat(roomId, action === "accept");
+
+    const newStatus = action === "accept" ? "accepted" : "rejected";
+
+    // Persist to localStorage so buttons don't reappear after refresh
+    const persistedStatuses = JSON.parse(localStorage.getItem('enlance_chat_statuses') || '{}');
+    persistedStatuses[roomId] = newStatus;
+    localStorage.setItem('enlance_chat_statuses', JSON.stringify(persistedStatuses));
+
+    // Update local state immediately
+    setChatRooms(prev => prev.map(r =>
+      r.id === roomId ? { ...r, status: newStatus } : r
+    ));
 
     if (action === "accept") {
       setActiveChat(roomId);
