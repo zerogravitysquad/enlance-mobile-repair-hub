@@ -299,8 +299,20 @@ const UserDashboard = () => {
         if (!room) return;
 
         const fetchedMessages = await chatAPI.getMessages(room.requestId, token);
+        // Transform raw API response to the format expected by the UI
+        const formatted = (fetchedMessages.data || []).map((m: any) => {
+          const senderId = m.senderId?._id?.toString() || m.senderId?.toString();
+          const isUser = senderId === room.userId?.toString();
+          return {
+            id: m._id,
+            text: m.message,
+            sender: isUser ? 'user' : 'shop',
+            time: new Date(m.createdAt).toLocaleTimeString(),
+            createdAt: m.createdAt
+          };
+        });
         setChatRooms(prev => prev.map(r =>
-          r.id === activeChat ? { ...r, messages: fetchedMessages.data } : r
+          r.id === activeChat ? { ...r, messages: formatted } : r
         ));
       } catch (error) {
         console.error("Failed to fetch messages:", error);
