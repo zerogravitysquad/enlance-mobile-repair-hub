@@ -21,7 +21,14 @@ const apiRequest = async (endpoint: string, method: string, body?: any, token?: 
         body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
     });
 
-    const data = await response.json();
+    let data;
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+    } else {
+        const text = await response.text();
+        data = { message: text || `Server Error (${response.status})` };
+    }
 
     if (!response.ok) {
         throw new Error(data.message || 'Something went wrong');
