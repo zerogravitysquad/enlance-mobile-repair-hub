@@ -103,6 +103,12 @@ const mobileModels: Record<string, string[]> = {
 const UserDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const APP_VERSION = "1.0.3-DIAGNOSTIC";
+
+  useEffect(() => {
+    console.log(`ENLANCE UserDashboard Version: ${APP_VERSION}`);
+    (window as any).ENLANCE_VERSION = APP_VERSION;
+  }, []);
   const [activeTab, setActiveTab] = useState<"request" | "chats" | "shops" | "my-requests">("request");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -240,9 +246,9 @@ const UserDashboard = () => {
       // Refresh requests list
       loadUserRequests();
     } catch (error: any) {
-      console.error("Submission error details:", error);
+      console.error(`[v:${APP_VERSION}] Submission error details:`, error);
       toast({
-        title: "Submission Failed",
+        title: `Submission Failed (${APP_VERSION})`,
         description: error.message || "Could not send request. Please try again.",
         variant: "destructive",
       });
