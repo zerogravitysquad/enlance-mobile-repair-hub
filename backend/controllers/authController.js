@@ -13,7 +13,7 @@ const User = require('../models/User');
  * @access  Public
  */
 const register = asyncHandler(async (req, res) => {
-    const { name, email, password, role, city, locationLink } = req.body;
+    const { name, email, password, role, city, address, mobile, locationLink } = req.body;
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
@@ -29,7 +29,9 @@ const register = asyncHandler(async (req, res) => {
         email,
         password, // Will be hashed by pre-save middleware
         role: role || 'user',
-        city: role === 'shopkeeper' ? city : undefined,
+        city: city, // Saving city for all if provided from UI
+        address: address,
+        mobile: mobile,
         locationLink: role === 'shopkeeper' ? locationLink : undefined,
         verified: role === 'shopkeeper' ? false : true // Shopkeepers need verification
     });
@@ -43,6 +45,8 @@ const register = asyncHandler(async (req, res) => {
                 email: user.email,
                 role: user.role,
                 city: user.city,
+                address: user.address,
+                mobile: user.mobile,
                 verified: user.verified,
                 locationLink: user.locationLink,
                 token: generateToken(user._id, user.role)

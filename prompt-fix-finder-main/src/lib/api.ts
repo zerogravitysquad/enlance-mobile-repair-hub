@@ -32,7 +32,7 @@ const apiRequest = async (endpoint: string, method: string, body?: any, token?: 
 
 // Auth APIs
 export const authAPI = {
-    register: (userData: { name: string; email: string; password: string; role: string }) =>
+    register: (userData: { name: string; email: string; password: string; role: string; mobile: string; city: string; address?: string }) =>
         apiRequest('/auth/register', 'POST', userData),
 
     login: (credentials: { email: string; password: string }) =>

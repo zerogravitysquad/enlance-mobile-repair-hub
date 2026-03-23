@@ -11,9 +11,10 @@ const { body, validationResult } = require('express-validator');
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        const firstError = errors.array()[0].msg;
         return res.status(400).json({
             success: false,
-            message: 'Validation failed',
+            message: firstError || 'Validation failed',
             errors: errors.array()
         });
     }
@@ -50,6 +51,11 @@ const validateRegister = [
         .if(body('role').equals('shopkeeper'))
         .notEmpty()
         .withMessage('City is required for shopkeepers'),
+    body('mobile')
+        .notEmpty()
+        .withMessage('Mobile number is required')
+        .matches(/^\d{10}$/)
+        .withMessage('Please provide a valid 10-digit mobile number'),
     handleValidationErrors
 ];
 

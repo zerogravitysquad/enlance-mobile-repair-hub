@@ -40,6 +40,18 @@ const userSchema = new mongoose.Schema({
             return this.role === 'shopkeeper'; // Required only for shopkeepers
         }
     },
+    address: {
+        type: String,
+        default: ''
+    },
+    mobile: {
+        type: String,
+        required: [true, 'Please provide a mobile number'],
+        match: [
+            /^\d{10}$/,
+            'Please provide a valid 10-digit mobile number'
+        ]
+    },
     area: {
         type: String,
         default: ''

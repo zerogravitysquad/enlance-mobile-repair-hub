@@ -53,12 +53,25 @@ const UserRegister = () => {
       return;
     }
 
+    // Validate password length
+    if (formData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await authAPI.register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: formData.role
+        role: formData.role,
+        mobile: formData.mobile,
+        city: formData.city,
+        address: formData.address || undefined
       });
 
       toast({
