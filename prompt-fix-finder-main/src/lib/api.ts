@@ -36,12 +36,12 @@ const apiRequest = async (endpoint: string, method: string, body?: any, token?: 
         
         // Extract the most descriptive error message possible
         const errorMessage = 
-            data.message || 
+            (data.message || 
             data.error || 
             data.msg || 
             (data.errors && data.errors[0] && (data.errors[0].msg || data.errors[0].message)) ||
             (typeof data === 'string' ? data : null) ||
-            `Server Error (${response.status})`;
+            `Server Error (${response.status})`) + ` [${method} ${endpoint}]`;
             
         throw new Error(errorMessage);
     }
