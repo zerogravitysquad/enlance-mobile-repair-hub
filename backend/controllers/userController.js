@@ -16,38 +16,45 @@ const User = require('../models/User');
 const createRepairRequest = asyncHandler(async (req, res) => {
     const { description, brand, model, city, area } = req.body;
 
-    // Check if image was uploaded
-    if (!req.file) {
-        res.status(400);
-        throw new Error('Please upload an image of the device');
-    }
-
-    // Determine image path (Cloudinary URL or Base64 fallback)
+    // Determine image path (resilient against missing or failed files)
     let imagePath = '';
-    if (req.file.path) {
-        // Cloudinary puts the URL in req.file.path
-        imagePath = req.file.path;
-    } else if (req.file.buffer) {
-        // Memory storage stores binary in req.file.buffer
-        const b64 = req.file.buffer.toString('base64');
-        imagePath = `data:${req.file.mimetype};base64,${b64}`;
+    try {
+        if (req.file) {
+            if (req.file.path) {
+                // Cloudinary URL
+                imagePath = req.file.path;
+            } else if (req.file.buffer) {
+                // Memory Buffer
+                const b64 = req.file.buffer.toString('base64');
+                imagePath = `data:${req.file.mimetype};base64,${b64}`;
+            }
+        }
+    } catch (imageErr) {
+        console.error("Image processing failed, proceeding without image:", imageErr);
+        // We proceed so the user can at least submit the text data
     }
 
     // Create repair request
-    const repairRequest = await RepairRequest.create({
-        userId: req.user._id,
-        imagePath,
-        description,
-        brand,
-        model,
-        city,
-        area
-    });
+    try {
+        const repairRequest = await RepairRequest.create({
+            userId: req.user._id,
+            imagePath,
+            description,
+            brand,
+            model,
+            city,
+            area
+        });
 
-    res.status(201).json({
-        success: true,
-        data: repairRequest
-    });
+        res.status(201).json({
+            success: true,
+            data: repairRequest
+        });
+    } catch (dbErr) {
+        console.error("Database error during request creation:", dbErr);
+        res.status(500);
+        throw new Error(`Failed to save repair request: ${dbErr.message}`);
+    }
 });
 
 /**

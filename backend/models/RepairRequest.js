@@ -13,9 +13,9 @@ const repairRequestSchema = new mongoose.Schema({
     },
     imagePath: {
         type: String,
-        required: [true, 'Please upload an image of the device']
-    },
-    description: {
+        required: false, // MADE OPTIONAL for emergency resilience
+        trim: true
+    },description: {
         type: String,
         required: [true, 'Please provide a description of the issue'],
         trim: true

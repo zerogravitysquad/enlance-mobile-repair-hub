@@ -140,7 +140,7 @@ const UserDashboard = () => {
           const mappedRequests = (fetchedRequests.data || []).map((req: any) => ({
             ...req,
             issue: req.description,
-            image: req.imagePath ? (req.imagePath.startsWith('http') ? req.imagePath : `${baseUrl}/${req.imagePath.replace(/\\/g, '/')}`) : null,
+            image: req.imagePath ? (req.imagePath.startsWith('http') || req.imagePath.startsWith('data:') ? req.imagePath : `${baseUrl}/${req.imagePath.replace(/\\/g, '/')}`) : null,
             time: new Date(req.createdAt).toLocaleDateString() + ' ' + new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }));
           setMyRequests(mappedRequests);
@@ -211,10 +211,20 @@ const UserDashboard = () => {
 
       // Convert base64 image back to a file for upload
       if (selectedImage) {
-        // Simple base64 to Blob conversion
-        const fetchResponse = await fetch(selectedImage);
-        const blob = await fetchResponse.blob();
-        requestData.append('image', blob, 'issue-image.jpg');
+        try {
+          // Robust base64 to Blob conversion (avoiding fetch issues)
+          const [header, data] = selectedImage.split(',');
+          const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
+          const binary = atob(data);
+          const array = [];
+          for (let i = 0; i < binary.length; i++) {
+            array.push(binary.charCodeAt(i));
+          }
+          const blob = new Blob([new Uint8Array(array)], { type: mime });
+          requestData.append('image', blob, 'issue-image.jpg');
+        } catch (convErr) {
+          console.error("Image conversion failed, sending without image:", convErr);
+        }
       }
 
       await requestAPI.create(requestData, token);
@@ -230,6 +240,7 @@ const UserDashboard = () => {
       // Refresh requests list
       loadUserRequests();
     } catch (error: any) {
+      console.error("Submission error details:", error);
       toast({
         title: "Submission Failed",
         description: error.message || "Could not send request. Please try again.",
@@ -247,7 +258,7 @@ const UserDashboard = () => {
         const mappedRequests = (requests.data || []).map((req: any) => ({
           ...req,
           issue: req.description,
-          image: req.imagePath ? (req.imagePath.startsWith('http') ? req.imagePath : `${baseUrl}/${req.imagePath.replace(/\\/g, '/')}`) : null,
+          image: req.imagePath ? (req.imagePath.startsWith('http') || req.imagePath.startsWith('data:') ? req.imagePath : `${baseUrl}/${req.imagePath.replace(/\\/g, '/')}`) : null,
           time: new Date(req.createdAt).toLocaleDateString() + ' ' + new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }));
         setMyRequests(mappedRequests);

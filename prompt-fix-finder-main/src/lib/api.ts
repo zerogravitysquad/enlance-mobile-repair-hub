@@ -31,7 +31,19 @@ const apiRequest = async (endpoint: string, method: string, body?: any, token?: 
     }
 
     if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        // Log the full error to console for debugging
+        console.error(`API Error (${response.status}) at ${endpoint}:`, data);
+        
+        // Extract the most descriptive error message possible
+        const errorMessage = 
+            data.message || 
+            data.error || 
+            data.msg || 
+            (data.errors && data.errors[0] && (data.errors[0].msg || data.errors[0].message)) ||
+            (typeof data === 'string' ? data : null) ||
+            `Server Error (${response.status})`;
+            
+        throw new Error(errorMessage);
     }
 
     return data;
