@@ -34,17 +34,9 @@ if (process.env.CLOUDINARY_API_KEY) {
     });
     console.log("Using Cloudinary for image uploads.");
 } else {
-    // Fall back to local disk storage
-    storage = multer.diskStorage({
-        destination: function (req, file, cb) {
-            cb(null, uploadDir);
-        },
-        filename: function (req, file, cb) {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-        }
-    });
-    console.log("Cloudinary credentials missing. Falling back to local disk storage.");
+    // Fall back to memory storage (no disk writing needed, perfect for Render/Vercel)
+    storage = multer.memoryStorage();
+    console.log("Cloudinary credentials missing. Using memory storage fallback.");
 }
 
 const upload = multer({ storage });

@@ -22,11 +22,21 @@ const createRepairRequest = asyncHandler(async (req, res) => {
         throw new Error('Please upload an image of the device');
     }
 
+    // Determine image path (Cloudinary URL or Base64 fallback)
+    let imagePath = '';
+    if (req.file.path) {
+        // Cloudinary puts the URL in req.file.path
+        imagePath = req.file.path;
+    } else if (req.file.buffer) {
+        // Memory storage stores binary in req.file.buffer
+        const b64 = req.file.buffer.toString('base64');
+        imagePath = `data:${req.file.mimetype};base64,${b64}`;
+    }
+
     // Create repair request
-    // Note: Cloudinary storage puts the full secure URL in req.file.path
     const repairRequest = await RepairRequest.create({
         userId: req.user._id,
-        imagePath: req.file.path,
+        imagePath,
         description,
         brand,
         model,
